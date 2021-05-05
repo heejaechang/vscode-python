@@ -1,5 +1,12 @@
 'use strict';
 
+import * as pprof from 'pprof'
+
+const startTime = Date.now();
+
+console.error('server started');
+const timeProfilerStop = pprof.time.start();
+
 // tslint:disable:no-var-requires no-require-imports
 
 // This line should always be right on top.
@@ -39,6 +46,7 @@ import { activateComponents } from './extensionActivation';
 import { initializeComponents, initializeGlobals } from './extensionInit';
 import { IServiceContainer } from './ioc/types';
 import { sendErrorTelemetry, sendStartupTelemetry } from './startupTelemetry';
+import { writeFileSync } from 'fs';
 
 durations.codeLoadingTime = stopWatch.elapsedTime;
 
@@ -68,6 +76,22 @@ export async function activate(context: IExtensionContext): Promise<IExtensionAp
     sendStartupTelemetry(ready, durations, stopWatch, serviceContainer)
         // Run in the background.
         .ignoreErrors();
+
+        if (timeProfilerStop) {
+            console.error(`time: ${Date.now() - startTime}`);
+    
+            // const profile = pprof.heap.profile();
+            const profile = timeProfilerStop();
+            const buffer = pprof.encodeSync(profile);
+    
+            // writeFileSync(`pprof-heap-profile-${Date.now()}.pb.gz`, buffer);
+            writeFileSync(`D:\\dump\\pprof-time-profile-${Date.now()}.pb.gz`, buffer);
+    
+            // pprof.heap.stop();
+    
+            console.error(`done ${Date.now() - startTime}`);
+        }
+    
     return api;
 }
 
